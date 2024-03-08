@@ -1,0 +1,12 @@
+database:
+  driver_name: postgres
+  host:
+  port: 5432
+  user: root
+  pass: root
+  dbname: library
+  sslmode: disable
+
+server:
+  host:
+  port: 8082
