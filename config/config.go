@@ -23,7 +23,7 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	f, err := os.Open("reservation-service/config.yaml")
+	f, err := os.Open("config.yaml")
 	if err != nil {
 		panic(err)
 	}

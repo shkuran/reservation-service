@@ -13,14 +13,15 @@ import (
 
 func main() {
 	conf := config.LoadConfig()
+	host := conf.Database.Host
 	port := conf.Database.Port
 	user := conf.Database.User
 	pass := conf.Database.Password
 	dbName := conf.Database.DbName
 	sslMode := conf.Database.SslMode
 	driverName := conf.Database.DriverName
-	connStr := fmt.Sprintf("port=%s user=%s password=%s dbname=%s sslmode=%s",
-		port, user, pass, dbName, sslMode)
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, pass, dbName, sslMode)
 
 	varDb, err := db.InitDB(driverName, connStr)
 	if err != nil {

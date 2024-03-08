@@ -1,6 +1,6 @@
 database:
   driver_name: postgres
-  host:
+  host: host.docker.internal
   port: 5432
   user: root
   pass: root
