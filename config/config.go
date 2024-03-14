@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -35,5 +36,6 @@ func LoadConfig() *Config {
 	if err != nil {
 		panic(err)
 	}
+	log.Println("Got configs!")
 	return &cfg
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shkuran/go-library-microservices/reservation-service/config"
@@ -13,7 +14,11 @@ import (
 
 func main() {
 	conf := config.LoadConfig()
-	host := conf.Database.Host
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = conf.Database.Host
+	}
+	log.Printf("db_host: %s", host)
 	port := conf.Database.Port
 	user := conf.Database.User
 	pass := conf.Database.Password
