@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +38,8 @@ func (h Handler) AddReservation(context *gin.Context) {
 		return
 	}
 
-	url := "http://localhost:8081/books/"
+	// url := "http://localhost:8081/books/"
+	url := "http://" + getBookServiceHost() + "/books/"
 	book, err := h.getBookById(url, reservation.BookId)
 	if err != nil {
 		utils.HandleInternalServerError(context, "Could not fetch book!", err)
@@ -50,11 +52,7 @@ func (h Handler) AddReservation(context *gin.Context) {
 		return
 	}
 
-	userId, err := strconv.ParseInt(context.Request.Header.Get("UserID"), 10, 64) // int64(1) //context.GetInt64("userId")
-	if err != nil {
-		utils.HandleBadRequest(context, "Could not parse UserId!", err)
-		return
-	}
+	userId := context.GetInt64("userId")
 	reservation.UserId = userId
 
 	err = h.repo.Save(reservation)
@@ -68,12 +66,6 @@ func (h Handler) AddReservation(context *gin.Context) {
         utils.HandleInternalServerError(context, "Failed to update the number of book copies in book service", err)
         return
     }
-
-	// err = h.bookRepo.UpdateAvailableCopies(b.ID, b.AvailableCopies-1)
-	// if err != nil {
-	// 	utils.HandleInternalServerError(context, "Could not update the number of book copies!", err)
-	// 	return
-	// }
 
 	utils.HandleStatusCreated(context, "Reservation added!")
 }
@@ -91,11 +83,7 @@ func (h Handler) CompleteReservation(context *gin.Context) {
 		return
 	}
 
-	userId, err := strconv.ParseInt(context.Request.Header.Get("UserID"), 10, 64) // int64(1) //context.GetInt64("userId")
-	if err != nil {
-		utils.HandleBadRequest(context, "Could not parse UserId!", err)
-		return
-	}
+	userId := context.GetInt64("userId")
 	if reservation.UserId != userId {
 		utils.HandleStatusUnauthorized(context, "Not access to copmlete reservation!", nil)
 		return
@@ -112,7 +100,7 @@ func (h Handler) CompleteReservation(context *gin.Context) {
 		return
 	}
 
-	url := "http://localhost:8081/books/"
+	url := "http://" + getBookServiceHost() + "/books/"
 	book, err := h.getBookById(url, reservation.BookId)
 	if err != nil {
 		utils.HandleInternalServerError(context, "Could not fetch book!", err)
@@ -126,6 +114,45 @@ func (h Handler) CompleteReservation(context *gin.Context) {
     }
 
 	context.JSON(http.StatusOK, gin.H{"message": "Reservation copmleted!"})
+}
+
+func (h Handler) ShowAllBooks(context *gin.Context) {
+	url := "http://" + getBookServiceHost() + "/books/"
+	books, err := h.getBooks(url)
+	if err != nil {
+		utils.HandleInternalServerError(context, "Could not get books!", err)
+		return
+	}
+
+	context.JSON(http.StatusOK, books)
+}
+
+func getBookServiceHost() string {
+	host := os.Getenv("BOOK_SERVICE_HOST")
+	if host == "" {
+		host = "localhost:8081"
+	}
+	return host
+}
+
+func (h Handler) getBooks(url string) ([]Book, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return []Book{}, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return []Book{}, fmt.Errorf("failed to get book. Status code: %d", response.StatusCode)
+	}
+
+	var books []Book
+	err = json.NewDecoder(response.Body).Decode(&books)
+	if err != nil {
+		return []Book{}, err
+	}
+
+	return books, nil
 }
 
 func (h Handler) getBookById(bookServiceURL string, bookID int64) (Book, error) {
